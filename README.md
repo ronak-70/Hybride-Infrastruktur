@@ -225,8 +225,8 @@ Implement:
 ```text
 Network: 10.0.0.0/24
 
-DC01       10.0.0.10
-DC02       10.0.0.11
+DC01       10.0.0.5
+DC02       10.0.0.6
 Client     DHCP / Reserved
 Gateway    10.0.0.1
 ```
