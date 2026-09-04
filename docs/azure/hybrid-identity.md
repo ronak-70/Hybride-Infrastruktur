@@ -161,3 +161,27 @@ and the user was created in Microsoft Entra ID.
 
 The remaining step is to enable the full Cloud Sync configuration and
 verify normal automatic synchronization and cloud sign-in.
+
+## Troubleshooting and Environmental Limitation
+### Environmental Limitation
+
+After the Microsoft Entra Cloud Sync configuration was enabled,
+the provisioning job entered a quarantined state with the following
+error:
+
+`HybridIdentityServiceNoActiveAgents`
+
+The Microsoft Entra Provisioning Agent service on `TW-DC02` was
+verified as running and was successfully restarted.
+
+Outbound HTTPS connectivity to Microsoft services was also tested:
+
+- `login.microsoftonline.com:443` - Successful
+- `www.microsoft.com:443` - Successful
+- `servicebus.windows.net:443` - Failed
+
+The same Service Bus connectivity test was performed directly from
+the physical DCI Linux host:
+
+```bash
+curl -Iv --connect-timeout 10 https://servicebus.windows.net

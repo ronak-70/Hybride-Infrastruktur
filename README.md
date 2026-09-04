@@ -14,14 +14,14 @@ This project implements a small-scale **enterprise hybrid IT infrastructure** co
 
 The goal is not only to deploy working infrastructure, but to demonstrate how a real hybrid environment can be:
 
-* securely connected
-* centrally managed
-* monitored
-* highly available
-* backed up
-* governed
-* cost-controlled
-* tested against controlled failures
+- securely connected
+- centrally managed
+- monitored
+- highly available
+- backed up
+- governed
+- cost-controlled
+- tested against controlled failures
 
 The project is implemented as part of a four-week infrastructure project focusing on **Windows Server, Azure, networking, identity, security, monitoring and high availability**.
 
@@ -186,30 +186,30 @@ Design selected infrastructure components without a single point of failure.
 
 Examples:
 
-* multiple Active Directory Domain Controllers
-* multiple application replicas
-* multiple AKS nodes
-* Kubernetes health checks
-* automatic workload recovery
+- multiple Active Directory Domain Controllers
+- multiple application replicas
+- multiple AKS nodes
+- Kubernetes health checks
+- automatic workload recovery
 
 ### Monitoring & Observability
 
 Centralize infrastructure and application metrics using:
 
-* Prometheus
-* Azure Monitor
-* Grafana
-* Log Analytics
+- Prometheus
+- Azure Monitor
+- Grafana
+- Log Analytics
 
 ### Security
 
 Implement multiple security layers:
 
-* Network Security Groups
-* Microsoft Defender for Cloud
-* RBAC
-* Key Vault
-* Azure Policy
+- Network Security Groups
+- Microsoft Defender for Cloud
+- RBAC
+- Key Vault
+- Azure Policy
 
 ### Backup & Recovery
 
@@ -219,11 +219,11 @@ Protect critical workloads and demonstrate recovery through controlled failure s
 
 Implement:
 
-* Azure Policy
-* resource tagging
-* RBAC
-* budgets
-* cost monitoring
+- Azure Policy
+- resource tagging
+- RBAC
+- budgets
+- cost monitoring
 
 ---
 
@@ -402,17 +402,17 @@ Azure
 
 ### Planned Dashboard Metrics
 
-* CPU utilization
-* Memory utilization
-* Disk utilization
-* Network traffic
-* Node availability
-* Pod status
-* Pod restarts
-* Application requests
-* Application latency
-* Error rate
-* Resource availability
+- CPU utilization
+- Memory utilization
+- Disk utilization
+- Network traffic
+- Node availability
+- Pod status
+- Pod restarts
+- Application requests
+- Application latency
+- Error rate
+- Resource availability
 
 ---
 
@@ -439,13 +439,13 @@ Security is implemented using multiple layers.
 
 Security controls include:
 
-* least-privilege RBAC
-* Network Security Groups
-* Microsoft Defender for Cloud
-* Azure Policy
-* secure secret storage
-* network segmentation
-* monitoring and alerting
+- least-privilege RBAC
+- Network Security Groups
+- Microsoft Defender for Cloud
+- Azure Policy
+- secure secret storage
+- network segmentation
+- monitoring and alerting
 
 ---
 
@@ -502,12 +502,12 @@ The project includes cloud cost controls.
 
 Planned controls:
 
-* Azure Budget
-* Cost alerts
-* Resource tagging
-* Resource cleanup
-* monitoring of active resources
-* review of unnecessary cloud resources
+- Azure Budget
+- Cost alerts
+- Resource tagging
+- Resource cleanup
+- monitoring of active resources
+- review of unnecessary cloud resources
 
 ---
 
@@ -566,24 +566,24 @@ screenshots/
 | ------------------- | -------------- |
 | Planning            | 🟡 In Progress |
 | GitHub Repository   | 🟡 In Progress |
-| Network Design      | ⚪ Planned      |
-| Windows Server      | ⚪ Planned      |
-| Active Directory    | ⚪ Planned      |
-| DNS                 | ⚪ Planned      |
-| Domain Client       | ⚪ Planned      |
-| Azure VNet          | ⚪ Planned      |
-| Site-to-Site VPN    | ⚪ Planned      |
-| Hybrid Identity     | ⚪ Planned      |
-| ACR                 | ⚪ Planned      |
-| AKS                 | ⚪ Planned      |
-| High Availability   | ⚪ Planned      |
-| Prometheus          | ⚪ Planned      |
-| Grafana             | ⚪ Planned      |
-| Security            | ⚪ Planned      |
-| Backup & Recovery   | ⚪ Planned      |
-| Governance          | ⚪ Planned      |
-| Failure Testing     | ⚪ Planned      |
-| Final Documentation | ⚪ Planned      |
+| Network Design      | ⚪ Planned     |
+| Windows Server      | ⚪ Planned     |
+| Active Directory    | ⚪ Planned     |
+| DNS                 | ⚪ Planned     |
+| Domain Client       | ⚪ Planned     |
+| Azure VNet          | ⚪ Planned     |
+| Site-to-Site VPN    | ⚪ Planned     |
+| Hybrid Identity     | ⚪ Planned     |
+| ACR                 | ⚪ Planned     |
+| AKS                 | ⚪ Planned     |
+| High Availability   | ⚪ Planned     |
+| Prometheus          | ⚪ Planned     |
+| Grafana             | ⚪ Planned     |
+| Security            | ⚪ Planned     |
+| Backup & Recovery   | ⚪ Planned     |
+| Governance          | ⚪ Planned     |
+| Failure Testing     | ⚪ Planned     |
+| Final Documentation | ⚪ Planned     |
 
 ---
 
@@ -639,18 +639,18 @@ Sensitive configuration must be stored securely and referenced through appropria
 
 Detailed implementation documentation will be added throughout the project.
 
-* Architecture
-* Network configuration
-* Active Directory
-* Azure configuration
-* Hybrid connectivity
-* Hybrid identity
-* Kubernetes
-* Monitoring
-* Security
-* Backup and recovery
-* Governance
-* Failure testing
+- Architecture
+- Network configuration
+- Active Directory
+- Azure configuration
+- Hybrid connectivity
+- Hybrid identity
+- Kubernetes
+- Monitoring
+- Security
+- Backup and recovery
+- Governance
+- Failure testing
 
 ---
 
@@ -694,7 +694,7 @@ controlled failure scenarios.
 
 ## Project Status
 
-Phase 0 - Planning       [x]
-Phase 1 - On-Prem        [ ]
+Phase 0 - Planning [x]
+Phase 1 - On-Prem [ ]
 Phase 2 - Active Directory [ ]
 ...
