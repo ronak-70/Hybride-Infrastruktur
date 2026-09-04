@@ -143,6 +143,43 @@ Establish secure private connectivity between the on-premises network and Azure 
 
 Synchronize on-premises Active Directory identities with **Microsoft Entra ID**.
 
+## Microsoft Entra ID Hybrid Identity
+
+Hybrid Identity was configured using Microsoft Entra Cloud Sync.
+
+The Microsoft Entra Provisioning Agent was installed on `TW-DC02`
+and successfully registered with Microsoft Entra ID.
+
+A dedicated `AzureSync` Organizational Unit was created in the
+On-Premises Active Directory domain `techwork.local` to control
+which users are synchronized to the cloud.
+
+Password Hash Synchronization was enabled, and the default attribute
+mappings were used.
+
+A Provision on Demand test was successfully completed for the user
+`Jolia Miller`, confirming that the user was in scope and could be
+created in Microsoft Entra ID.
+
+### Status
+
+- [x] Microsoft Entra Provisioning Agent installed
+- [x] Provisioning Agent registered and Active
+- [x] gMSA service account configured
+- [x] `techwork.local` connected to Microsoft Entra Cloud Sync
+- [x] `AzureSync` OU created
+- [x] OU scoping configured
+- [x] Password Hash Synchronization enabled
+- [x] Default attribute mappings verified
+- [x] Provision on Demand test successful
+- [x] Enable full Cloud Sync configuration
+- [x] Verify automatic synchronization
+- [x] Verify synchronized user sign-in
+
+Detailed documentation:
+
+[Hybrid Identity Documentation](docs/azure/hybrid-identity.md)
+
 ### High Availability
 
 Design selected infrastructure components without a single point of failure.
