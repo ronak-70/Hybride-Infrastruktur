@@ -71,13 +71,13 @@ kubectl port-forward -n monitoring svc/monitoring-grafana 3000:80
 
 Grafana was then accessed locally from the Windows workstation using:
 
-````
-
+```text
 http://localhost:3000
+
 
 The Grafana administrator username is:
 
-````text
+
 admin
 
 The administrator password was retrieved securely from the Kubernetes Secret and was not stored in the GitHub repository.
@@ -90,24 +90,24 @@ The Grafana Kubernetes dashboards were successfully loaded after the monitoring 
 
 The following dashboard was used to validate application and Kubernetes metrics:
 
-```text
+
 Kubernetes / Compute Resources / Namespace (Pods)
 
 The dashboard was filtered to the following Kubernetes namespace:
 
-```text
+
 default
 
 The hybrid-api-helm application pods were successfully detected by Prometheus and displayed in Grafana.
 
 The monitored pods included the running replicas of:
 
-```text
+
 hybrid-api-helm
 
 The dashboard successfully displayed metrics including:
 
-```text
+
 CPU utilisation
 CPU requests
 CPU limits
@@ -126,7 +126,7 @@ At the time of validation, both application pods were visible in Grafana and Pro
 
 The application uses the following Kubernetes resource configuration:
 
-```text
+
 CPU request: 50m
 CPU limit: 250m
 Memory request: 64Mi
@@ -140,7 +140,7 @@ Monitoring Architecture
 
 The resulting monitoring data flow is:
 
-```text
+
 AKS Nodes and Pods
         |
         v
@@ -157,7 +157,7 @@ Kubernetes Dashboards
 
 For the application workload, the monitoring path is:
 
-```text
+
 hybrid-api-helm Pods
         |
         v
@@ -177,7 +177,7 @@ The Prometheus and Grafana monitoring implementation was successfully validated.
 
 The following monitoring functionality is currently operational:
 
-```text
+
 Prometheus deployment: Successful
 Grafana deployment: Successful
 Kubernetes metrics collection: Working
@@ -203,7 +203,7 @@ The hybrid-api-helm application is visible in the monitoring system, and CPU and
 
 The remaining monitoring tasks are:
 
-```text
+
 Observe HPA scaling behavior in Grafana under load
 Configure application-specific dashboards
 Configure alerting rules
