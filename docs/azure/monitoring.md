@@ -210,5 +210,116 @@ Configure alerting rules
 Document monitoring failure tests
 
 
+## Grafana Alerting and Webhook Notification
+
+Grafana Alerting was configured to monitor CPU utilization of the `hybrid-api-helm` application.
+
+A Grafana-managed alert rule named `hybrid-api-high-cpu` was created using Prometheus as the data source.
+
+The alert rule monitors CPU utilization relative to the configured Kubernetes CPU requests for the application pods.
+
+The alert condition was configured as:
+
+```text
+Alert rule: hybrid-api-high-cpu
+Target application: hybrid-api-helm
+Namespace: default
+CPU threshold: 80%
+Evaluation interval: 1 minute
+Pending period: 2 minutes
+Severity: warning
+Environment: lab
+
+The alert rule uses the following labels:
+
+```
+service = hybrid-api
+severity = warning
+environment = lab
+
+A Webhook contact point named hybrid-api-webhook was created in Grafana.
+
+A notification policy was configured to route alerts containing the following label:
+
+```
+service = hybrid-api
+
+to the hybrid-api-webhook contact point.
+
+Webhook.site was used as a temporary external endpoint to validate delivery of Grafana alert notifications.
+
+To test the alert, a temporary Kubernetes load-generator pod was used to generate continuous HTTP traffic against the application.
+
+During the load test, CPU utilization increased above the configured 80% threshold.
+
+The alert state changed through the following sequence:
+
+Normal
+   |
+   v
+Pending
+   |
+   v
+Firing
+
+The alert successfully entered the Firing state after the CPU threshold remained exceeded for the configured pending period.
+
+Grafana then delivered an HTTP POST notification to the configured webhook endpoint.
+
+Webhook.site successfully received the notification requests, confirming that the complete alerting and notification path was operational.
+
+The validated notification flow is:
+
+hybrid-api-helm Pods
+        |
+        v
+Prometheus Metrics
+        |
+        v
+Grafana Alert Rule
+        |
+        v
+Notification Policy
+        |
+        v
+Webhook Contact Point
+        |
+        v
+Webhook.site
+
+The test successfully validated:
+
+High CPU detection: Successful
+Alert evaluation: Successful
+Pending state: Successful
+Firing state: Successful
+Notification policy routing: Successful
+Webhook contact point: Successful
+Webhook POST delivery: Successful
+
+This implementation demonstrates automated monitoring and external notification delivery for application-level resource conditions in the AKS environment.
 
 ````
+## Current Status
+
+The Prometheus and Grafana monitoring environment is operational and has been successfully validated against the AKS infrastructure and the `hybrid-api-helm` application.
+
+Current monitoring status:
+
+```text
+Prometheus deployment: Successful
+Grafana deployment: Successful
+Kubernetes metrics collection: Working
+AKS node monitoring: Working
+Pod CPU monitoring: Working
+Pod memory monitoring: Working
+Resource requests and limits monitoring: Working
+hybrid-api-helm monitoring: Successful
+HPA monitoring under load: Successful
+Grafana alerting: Configured
+High CPU alert: Successful
+Notification policy: Configured
+Webhook contact point: Working
+External webhook delivery: Successful
+
+The monitoring and alerting implementation is considered complete for the current project scope.

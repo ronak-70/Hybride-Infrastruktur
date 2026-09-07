@@ -619,3 +619,7 @@ Helm-managed Ingress: Working
 Helm-managed HPA: Configured
 Manual Kubernetes resources: Removed
 ```
+
+```text
+Prometheus and Grafana integration: Successful
+```
