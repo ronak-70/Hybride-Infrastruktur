@@ -201,6 +201,23 @@ Centralize infrastructure and application metrics using:
 - Grafana
 - Log Analytics
 
+````markdown
+### Monitoring
+
+- [x] Prometheus deployed
+- [x] Grafana deployed
+- [x] Kubernetes metrics collection verified
+- [x] Node CPU and memory monitoring verified
+- [x] Pod CPU and memory monitoring verified
+- [x] Resource requests and limits visible in Grafana
+- [x] `hybrid-api-helm` monitoring verified
+- [ ] HPA monitoring under load
+- [ ] Alerting configuration
+
+Detailed documentation:
+
+[Prometheus and Grafana Monitoring](docs/azure/monitoring.md)
+
 ### Security
 
 Implement multiple security layers:
@@ -267,6 +284,7 @@ DC02       10.0.0.6
 Client     DHCP / Reserved
 Gateway    10.0.0.1
 ```
+````
 
 ## Azure Network
 
