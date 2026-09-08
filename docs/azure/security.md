@@ -2,11 +2,9 @@
 
 ## Overview
 
-Phase 11 of the Hybrid Infrastructure project focuses on securing access between the Azure Kubernetes Service workload and Azure platform services.
+Phase 11 of the Hybrid Infrastructure project focuses on securing access between Azure Kubernetes Service (AKS) workloads and Azure platform services.
 
-The primary security implementation in this phase uses Azure Key Vault together with Microsoft Entra Workload Identity.
-
-The goal is to allow Kubernetes workloads to access Azure resources without storing long-lived passwords, client secrets, or credentials inside container images, Kubernetes manifests, or the GitHub repository.
+The primary security implementation in this phase uses Azure Key Vault together with Microsoft Entra Workload Identity. The goal is to allow Kubernetes workloads to access Azure resources without storing long-lived passwords, client secrets, or credentials inside container images, Kubernetes manifests, Helm values, or the GitHub repository.
 
 A dedicated user-assigned managed identity was created for the `hybrid-api` workload and federated with a Kubernetes ServiceAccount.
 
@@ -56,6 +54,7 @@ The security implementation was designed with the following objectives:
 - Apply least-privilege access to Azure Key Vault.
 - Use Azure RBAC instead of legacy Key Vault access policies.
 - Separate the application identity from the AKS cluster identity.
+- Restrict Key Vault network access to approved networks.
 - Validate access directly from a Kubernetes workload.
 - Use short-lived federated tokens instead of static application credentials.
 
@@ -74,7 +73,6 @@ Region: Poland Central
 SKU: Standard
 Authorization model: Azure RBAC
 Soft delete: Enabled
-Public network access: Enabled
 ```
 
 Before the Key Vault could be created, the Azure subscription required registration of the `Microsoft.KeyVault` resource provider.
@@ -146,8 +144,6 @@ az keyvault secret set \
 
 The test value contains no production credential and was used only to validate the security architecture.
 
-The secret was successfully stored in Azure Key Vault.
-
 No Key Vault secret value, password, token, or application credential is stored in the GitHub repository.
 
 ---
@@ -184,14 +180,7 @@ The result was:
 ]
 ```
 
-This confirmed that both:
-
-```text
-Microsoft Entra Workload Identity: Enabled
-OIDC Issuer: Enabled
-```
-
-are active on the AKS cluster.
+This confirmed that both Microsoft Entra Workload Identity and the AKS OIDC issuer are enabled.
 
 The OIDC issuer URL was retrieved using:
 
@@ -276,19 +265,6 @@ This allows the workload identity to read Key Vault secrets while avoiding unnec
 The application identity was not granted permission to manage the Key Vault itself.
 
 This follows the principle of least privilege.
-
-The resulting authorization model is:
-
-```text
-id-hybrid-api
-      |
-      | Key Vault Secrets User
-      v
-kv-hybrid-ronak01
-      |
-      v
-Read Secrets
-```
 
 ---
 
@@ -383,21 +359,6 @@ Name: fic-hybrid-api
 Subject: system:serviceaccount:default:hybrid-api-sa
 ```
 
-The resulting trust relationship is:
-
-```text
-AKS OIDC Issuer
-       |
-       v
-hybrid-api-sa
-       |
-       v
-fic-hybrid-api
-       |
-       v
-id-hybrid-api
-```
-
 ---
 
 ## Workload Identity Test
@@ -427,13 +388,13 @@ metadata:
 spec:
   serviceAccountName: hybrid-api-sa
   containers:
-    - name: azure-cli
-      image: mcr.microsoft.com/azure-cli:latest
-      command:
-        - /bin/sh
-        - -c
-        - |
-          sleep 3600
+  - name: azure-cli
+    image: mcr.microsoft.com/azure-cli:latest
+    command:
+    - /bin/sh
+    - -c
+    - |
+      sleep 3600
 ```
 
 The pod was deployed using:
@@ -448,7 +409,7 @@ The pod status was verified using:
 kubectl get pod workload-identity-test
 ```
 
-The pod successfully entered the following state:
+The pod successfully entered:
 
 ```text
 READY: 1/1
@@ -473,9 +434,7 @@ az login \
 
 Authentication completed successfully.
 
-The identity inside the pod was recognized as a service principal rather than a user account.
-
-The pod then attempted to retrieve the test secret directly from Azure Key Vault:
+The pod then retrieved the test secret directly from Azure Key Vault:
 
 ```bash
 az keyvault secret show \
@@ -491,147 +450,251 @@ The command successfully returned:
 Secret successfully retrieved from Azure Key Vault
 ```
 
-This confirmed that the pod could authenticate to Microsoft Entra ID using Kubernetes Workload Identity and retrieve a Key Vault secret using Azure RBAC.
-
 After the successful test, the temporary pod was removed:
 
 ```bash
 kubectl delete pod workload-identity-test
 ```
 
-The test resource was successfully deleted from the cluster.
-
----
-
-## Security Validation Result
-
-The complete security authentication path was successfully validated.
-
-The tested flow was:
-
-```text
-Kubernetes Pod
-      |
-      v
-hybrid-api-sa
-      |
-      | OIDC ServiceAccount Token
-      v
-Microsoft Entra ID
-      |
-      v
-fic-hybrid-api
-      |
-      v
-id-hybrid-api
-      |
-      | Key Vault Secrets User
-      v
-Azure Key Vault
-      |
-      v
-hybrid-api-message
-```
-
-The following security functionality was successfully validated:
-
-```text
-Microsoft.KeyVault provider registration: Successful
-Azure Key Vault deployment: Successful
-Azure RBAC authorization: Enabled
-Test secret creation: Successful
-AKS OIDC issuer: Enabled
-AKS Workload Identity: Enabled
-User Assigned Managed Identity: Created
-Kubernetes ServiceAccount: Created
-Federated Identity Credential: Created
-Federated authentication: Successful
-Key Vault RBAC assignment: Successful
-Authentication from Kubernetes Pod: Successful
-Key Vault secret retrieval from Pod: Successful
-Static Azure credentials inside Pod: Not required
-Test Pod cleanup: Successful
-```
-
 ---
 
 ## Security Benefits
 
-The implemented architecture provides several security advantages.
-
 ### No Static Azure Credentials
 
-The Kubernetes workload does not require a stored Azure client secret or password.
-
-Authentication is performed using short-lived federated tokens.
+The Kubernetes workload does not require a stored Azure client secret or password. Authentication is performed using short-lived federated tokens.
 
 ### Least Privilege Access
 
 The `id-hybrid-api` managed identity receives only the `Key Vault Secrets User` role required to read application secrets.
 
-It does not receive administrative permissions over the Key Vault.
-
 ### Secret Separation
 
-Application secrets are stored in Azure Key Vault instead of:
-
-```text
-Docker images
-GitHub repository
-Kubernetes Deployment YAML
-Helm values.yaml
-Source code
-```
+Application secrets are stored in Azure Key Vault instead of Docker images, GitHub, Kubernetes Deployment YAML, Helm values, or source code.
 
 ### Identity Separation
 
-The application uses a dedicated workload identity instead of using the AKS cluster identity.
-
-This separates infrastructure permissions from application permissions.
+The application uses a dedicated workload identity instead of using the AKS cluster identity. This separates infrastructure permissions from application permissions.
 
 ### Federated Authentication
 
-The Kubernetes ServiceAccount token is trusted through Microsoft Entra federation.
+The Kubernetes ServiceAccount token is trusted through Microsoft Entra federation. No permanent Microsoft Entra application password is required.
 
-No permanent Entra application password is required.
+---
+
+## Network Security Group Review
+
+The Azure Network Security Group configuration was reviewed as part of Phase 11 security hardening.
+
+The workload NSG is:
+
+```text
+NSG: tw-app-01NSG
+Associated subnet: snet-workload
+Associated NIC: tw-app-01VMNic
+VM: tw-app-01
+VM private IP: 10.10.1.4
+```
+
+The NSG is associated with both the workload subnet and the virtual machine network interface.
+
+The custom inbound rule is:
+
+```text
+Rule name: Allow-SSH-MyIP
+Priority: 100
+Protocol: TCP
+Port: 22
+Source: 134.130.119.93
+Destination: Any
+Action: Allow
+```
+
+SSH access is therefore restricted to the approved management public IP instead of being exposed to the entire internet.
+
+The default Azure inbound rules remain active:
+
+```text
+AllowVNetInBound
+AllowAzureLoadBalancerInBound
+DenyAllInBound
+```
+
+No custom outbound security rules are currently configured.
+
+The AKS-managed NSG inside the `MC_...` resource group was reviewed but was not manually modified because it is managed as part of the AKS infrastructure.
+
+---
+
+## Key Vault Network Hardening
+
+The Azure Key Vault network configuration was hardened after the initial Workload Identity validation.
+
+Public access from all networks was removed and the Key Vault firewall was configured to allow access only from selected virtual networks and IP addresses.
+
+The following network restrictions were configured:
+
+```text
+Default network action: Deny
+Allowed management IP: 134.130.119.93/32
+Allowed virtual network: vnet-hybrid-prod
+Allowed subnet: snet-aks
+Trusted services bypass: Disabled
+```
+
+The `Microsoft.KeyVault` service endpoint was enabled on the AKS subnet.
+
+The configuration was verified using:
+
+```bash
+az network vnet subnet show \
+  --resource-group rg-hybrid-infrastructure \
+  --vnet-name vnet-hybrid-prod \
+  --name snet-aks \
+  --query serviceEndpoints \
+  -o table
+```
+
+The result confirmed:
+
+```text
+Subnet: snet-aks
+Service endpoint: Microsoft.KeyVault
+Provisioning state: Succeeded
+```
+
+The Key Vault network rules were verified using:
+
+```bash
+az keyvault network-rule list \
+  --name kv-hybrid-ronak01
+```
+
+The configuration confirmed:
+
+```text
+Default action: Deny
+Bypass: None
+Allowed IP: 134.130.119.93/32
+Allowed VNet/Subnet: vnet-hybrid-prod / snet-aks
+```
+
+After the firewall restrictions were applied, access from Azure Cloud Shell was intentionally blocked because Cloud Shell was not running from an authorized network.
+
+The Key Vault returned:
+
+```text
+ForbiddenByFirewall
+Client address is not authorized
+```
+
+This confirmed that the Key Vault firewall was actively enforcing the configured network restrictions.
+
+A second validation test was then performed from inside the AKS cluster.
+
+A temporary Workload Identity test pod was created in the `default` namespace using the `hybrid-api-sa` Kubernetes ServiceAccount.
+
+The pod successfully authenticated to Microsoft Entra ID using the federated token.
+
+The authentication type was:
+
+```text
+servicePrincipal
+```
+
+The pod then retrieved the `hybrid-api-message` secret from Azure Key Vault.
+
+The returned value was:
+
+```text
+Secret successfully retrieved from Azure Key Vault
+```
+
+This confirmed that the complete hardened access path was operational:
+
+```text
+Unauthorized network
+        |
+        v
+Key Vault Firewall
+        |
+      BLOCKED
+
+
+AKS snet-aks
+        |
+        v
+Microsoft.KeyVault Service Endpoint
+        |
+        v
+Workload Identity
+        |
+        v
+Azure RBAC
+        |
+        v
+Azure Key Vault
+        |
+        v
+Secret Retrieval
+```
+
+The network hardening test successfully validated:
+
+```text
+Key Vault firewall: Enabled
+Default network action: Deny
+Unauthorized Cloud Shell access: Blocked
+AKS subnet service endpoint: Configured
+AKS subnet access: Allowed
+Workload Identity authentication: Successful
+Key Vault RBAC authorization: Successful
+Secret retrieval from AKS Pod: Successful
+```
+
+This implementation ensures that Key Vault access is protected by both identity-based authorization and network-level restrictions.
 
 ---
 
 ## Current Status
 
-The Azure Key Vault and AKS Workload Identity security implementation is operational and has been successfully validated.
+The Azure Key Vault, AKS Workload Identity, NSG review, and Key Vault network-hardening implementation are operational and have been successfully validated.
 
 Current security status:
 
 ```text
 Azure Key Vault: Deployed
-Key Vault region: Poland Central
 Key Vault authorization model: Azure RBAC
 Key Vault soft delete: Enabled
-Application secret: Stored securely
+
 AKS OIDC issuer: Enabled
 AKS Workload Identity: Enabled
 Managed Identity: id-hybrid-api
 Kubernetes ServiceAccount: hybrid-api-sa
 Federated Identity Credential: fic-hybrid-api
 Key Vault Secrets User RBAC: Configured
+
 Federated authentication: Working
 Secret retrieval from AKS Pod: Successful
 Static Azure credentials: Not required
-```
 
-The Workload Identity and Key Vault implementation is considered successfully validated for the current project scope.
+Workload NSG: Reviewed
+SSH source restriction: 134.130.119.93 only
+Default deny inbound: Active
+
+Key Vault firewall: Enabled
+Default Key Vault network action: Deny
+Allowed AKS subnet: snet-aks
+Microsoft.KeyVault service endpoint: Enabled
+Unauthorized Cloud Shell access: Blocked
+Authorized AKS workload access: Successful
+```
 
 The remaining Phase 11 security-hardening tasks are:
 
 ```text
-Review Azure NSG configuration
-Review AKS public exposure
 Review Azure RBAC assignments
 Review ACR access permissions
-Review Key Vault network access
 Review Microsoft Defender for Cloud recommendations
 Define final security baseline
 ```
-
-These items will be reviewed before Phase 11 is considered fully complete.
