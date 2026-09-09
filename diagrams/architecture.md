@@ -5,19 +5,16 @@
 ```mermaid
 flowchart LR
 
-    %% -----------------------------
+    %% =========================
     %% On-Premises
-    %% -----------------------------
-
+    %% =========================
     subgraph ONPREM["On-Premises Infrastructure"]
         direction TB
-
         VMWARE["VMware Workstation"]
-
         DC01["TW-DC01<br/>AD DS / DNS / DHCP<br/>10.0.0.5"]
         DC02["TW-DC02<br/>AD DS / DNS<br/>10.0.0.6"]
         CLIENT["TW-CLIENT<br/>Domain Joined<br/>10.0.0.50"]
-        PFSENSE["TW-FW01 / pfSense<br/>LAN: 10.0.0.1"]
+        PFSENSE["TW-FW01 / pfSense<br/>LAN 10.0.0.1"]
 
         VMWARE --> DC01
         VMWARE --> DC02
@@ -28,30 +25,26 @@ flowchart LR
         CLIENT --> DC02
     end
 
-    %% -----------------------------
+    %% =========================
     %% Microsoft Entra ID
-    %% -----------------------------
-
+    %% =========================
     ENTRA["Microsoft Entra ID"]
+    DC02 -. "Cloud Sync<br/>Provision on Demand validated" .-> ENTRA
 
-    DC02 -->|"Microsoft Entra Cloud Sync<br/>Provision on Demand validated"| ENTRA
-
-    %% -----------------------------
-    %% Hybrid VPN
-    %% -----------------------------
-
-    VPNCFG["Site-to-Site IPsec VPN<br/>IKEv2 / AES256 / SHA256<br/>Configured, not operational due to<br/>external student-network limitation"]
+    %% =========================
+    %% Hybrid Connectivity
+    %% =========================
+    VPNCFG["Site-to-Site IPsec VPN<br/>IKEv2 / AES256 / SHA256<br/>Configured but not operational<br/>because of external network restrictions"]
 
     PFSENSE -.-> VPNCFG
 
-    %% -----------------------------
-    %% Azure VNet
-    %% -----------------------------
-
+    %% =========================
+    %% Microsoft Azure
+    %% =========================
     subgraph AZURE["Microsoft Azure - Poland Central"]
         direction TB
 
-        subgraph VNET["vnet-hybrid-prod<br/>10.10.0.0/16"]
+        subgraph VNET["vnet-hybrid-prod - 10.10.0.0/16"]
             direction TB
 
             WORKLOAD["snet-workload<br/>10.10.1.0/24"]
@@ -59,109 +52,96 @@ flowchart LR
             AKSSUBNET["snet-aks<br/>10.10.3.0/24"]
             GWSUBNET["GatewaySubnet<br/>10.10.10.0/24"]
 
-            VM["tw-app-01<br/>10.10.1.4"]
+            VM["tw-app-01<br/>Private IP 10.10.1.4"]
             NAT["nat-hybrid-workload<br/>Explicit outbound connectivity"]
 
             WORKLOAD --> VM
             WORKLOAD --> NAT
         end
 
-        %% AKS
-        subgraph AKS["Azure Kubernetes Service<br/>aks-hybrid-prod"]
+        subgraph AKSCLUSTER["Azure Kubernetes Service - aks-hybrid-prod"]
             direction TB
 
             NODE1["Worker Node 1"]
             NODE2["Worker Node 2"]
-
-            DEPLOY["Helm Release<br/>hybrid-api-helm"]
-
-            POD1["Application Pod"]
-            POD2["Application Pod"]
-
-            HPA["HPA<br/>Min 2 / Max 5<br/>CPU Target 50%"]
-
-            SVC["ClusterIP Service"]
-            ING["Application Routing Ingress<br/>20.215.101.192"]
+            HELM["Helm Release<br/>hybrid-api-helm"]
+            POD1["Application Pod 1"]
+            POD2["Application Pod 2"]
+            HPA["Horizontal Pod Autoscaler<br/>Min 2 / Max 5<br/>CPU target 50%"]
+            SERVICE["ClusterIP Service"]
+            INGRESS["Application Routing Ingress<br/>20.215.101.192"]
 
             NODE1 --> POD1
             NODE2 --> POD2
-
-            DEPLOY --> POD1
-            DEPLOY --> POD2
-            HPA --> DEPLOY
-
-            POD1 --> SVC
-            POD2 --> SVC
-            SVC --> ING
+            HELM --> POD1
+            HELM --> POD2
+            HPA --> HELM
+            POD1 --> SERVICE
+            POD2 --> SERVICE
+            SERVICE --> INGRESS
         end
 
-        AKSSUBNET --> AKS
+        AKSSUBNET --> AKSCLUSTER
 
-        %% Container Registry
-        ACR["Azure Container Registry<br/>acrhybridronak01<br/>Admin User Disabled"]
+        ACR["Azure Container Registry<br/>acrhybridronak01<br/>Admin user disabled"]
+        ACR -->|"AcrPull via managed identity"| AKSCLUSTER
 
-        ACR -->|"AcrPull via kubelet identity"| AKS
-
-        %% Key Vault / Identity
-        KV["Azure Key Vault<br/>kv-hybrid-ronak01<br/>RBAC + Firewall"]
-
+        KV["Azure Key Vault<br/>kv-hybrid-ronak01<br/>RBAC + network restrictions"]
         MI["User Assigned Managed Identity<br/>id-hybrid-api"]
-
         SA["Kubernetes ServiceAccount<br/>hybrid-api-sa"]
-
         FIC["Federated Identity Credential<br/>fic-hybrid-api"]
 
         SA --> FIC
         FIC --> MI
         MI -->|"Key Vault Secrets User"| KV
-        AKS --> SA
+        AKSCLUSTER --> SA
 
-        %% Monitoring
         subgraph MON["Monitoring and Alerting"]
+            direction TB
             PROM["Prometheus"]
             GRAFANA["Grafana"]
-            ALERT["Grafana Alerting<br/>High CPU Alert"]
+            ALERT["Grafana Alerting<br/>High CPU alert"]
+
+            PROM --> GRAFANA
+            GRAFANA --> ALERT
         end
 
-        AKS --> PROM
-        PROM --> GRAFANA
-        GRAFANA --> ALERT
+        AKSCLUSTER --> PROM
 
-        %% Backup
         RSV["Recovery Services Vault<br/>rsv-hybrid-prod"]
-
         VM -->|"Azure Backup"| RSV
 
-        %% Governance
         POLICY["Azure Policy<br/>Require environment tag<br/>100% compliant"]
+        BUDGET["Azure Cost Management<br/>Monthly budget 20 EUR"]
 
-        BUDGET["Cost Management<br/>Monthly Budget: 20 EUR"]
+        POLICY -.-> VM
+        POLICY -.-> AKSCLUSTER
+        POLICY -.-> KV
 
-        POLICY --> VNET
-        BUDGET --> AZURE
+        BUDGET -.-> VM
+        BUDGET -.-> AKSCLUSTER
+        BUDGET -.-> RSV
     end
 
-    %% -----------------------------
+    %% =========================
     %% External Access
-    %% -----------------------------
-
+    %% =========================
     USER["External User / Tester"]
+    USER -->|"HTTP"| INGRESS
 
-    USER -->|"HTTP"| ING
-
-    %% -----------------------------
+    %% =========================
     %% VPN Relationship
-    %% -----------------------------
+    %% =========================
+    VPNCFG -. "Configured path" .-> GWSUBNET
 
-    VPNCFG -.-> GWSUBNET
+    %% =========================
+    %% Known Limitations
+    %% =========================
+    LIMIT["Known Environmental Limitations<br/><br/>S2S VPN not fully established<br/>Continuous Entra Cloud Sync blocked by Service Bus access<br/>Azure Backup File Recovery stopped at iSCSI authentication"]
 
-    %% -----------------------------
-    %% Notes
-    %% -----------------------------
-
-    LIMIT["Known Environmental Limitations<br/><br/>• S2S VPN could not fully establish<br/>• Continuous Entra Cloud Sync blocked by Service Bus access<br/>• Azure Backup File Recovery stopped at iSCSI authentication"]
-
-    LIMIT -.-> AZURE
+    LIMIT -.-> VPNCFG
+    LIMIT -.-> ENTRA
+    LIMIT -.-> RSV
 ```
 
 ---
@@ -185,7 +165,7 @@ Azure Cost Management
 NAT Gateway
 ```
 
-The architecture was intentionally designed to demonstrate:
+The architecture demonstrates:
 
 ```text
 Hybrid identity
